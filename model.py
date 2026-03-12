@@ -1,4 +1,5 @@
 import cadquery as cq
+import math
 
 TOP_INNER_RADIUS = 16.0 
 THICKNESS = 1.5
@@ -6,6 +7,8 @@ BOTTOM_HEIGHT = 25.0
 BOTTOM_INNER_RADIUS = 29.0
 BOTTOM_STAND_DIFF = 10
 TOP_HEIGHT = 50.0
+VENT_EXTRA_HEIGHT = 1.0
+VENT_TUBE_RADIUS = 3.0
 
 # 漏斗参数
 FUNNEL_HEIGHT = 6.0
@@ -24,7 +27,7 @@ def create_model():
         cq.Workplane("XY")
         .circle(BOTTOM_INNER_RADIUS + THICKNESS)
         .circle(BOTTOM_INNER_RADIUS)
-        .extrude(BOTTOM_HEIGHT)
+        .extrude(BOTTOM_HEIGHT+VENT_EXTRA_HEIGHT)
     )
 
     result = (
@@ -81,13 +84,34 @@ def create_model():
         .rect(14, 14)
         .extrude(BOTTOM_INNER_RADIUS + THICKNESS + 5+30) # 向一侧拉伸出足够的长度
     )
-    # show_object(cut_box)
-    # 使用布尔运算切掉它
     result = result.cut(cut_box)
-    
     return result
 
-# 运行
-model = create_model()
+def bottom_cover_vent(result, count=6):
+    degree = 360.0 / count
+    for i in range(count):
+        angle = i * degree  # 每60度一个孔，共6个
+        angle_rad = angle * math.pi / 180
+        
+        outer_radius = BOTTOM_INNER_RADIUS + THICKNESS
+        inner_radius = TOP_INNER_RADIUS + THICKNESS
+        mid_point = (inner_radius + outer_radius) / 2
+        x = mid_point * math.cos(angle_rad)
+        y = mid_point * math.sin(angle_rad)
+        
+        # 创建切削圆柱 - 从外向内切
+        cut_cylinder = (
+            cq.Workplane("XY")
+            .center(x, y)
+            .circle(VENT_TUBE_RADIUS)
+            .extrude(50)  # 向内延伸
+        )
+        # show_object(cut_cylinder)
+        
+        result = result.cut(cut_cylinder)
+    return result
 
+
+model = create_model()
+model = bottom_cover_vent(model, 8)
 display(model)
