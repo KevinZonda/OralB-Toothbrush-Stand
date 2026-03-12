@@ -81,7 +81,7 @@ def create_model():
     cut_box = (
         cq.Workplane("XZ")
         .center(0, 7) # X轴不动，Y轴向上偏5 (在XZ平面里Y轴其实对应全局Z轴)
-        .rect(14, 14)
+        .rect(12, 14)
         .extrude(BOTTOM_INNER_RADIUS + THICKNESS + 5+30) # 向一侧拉伸出足够的长度
     )
     result = result.cut(cut_box)
