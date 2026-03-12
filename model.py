@@ -9,6 +9,7 @@ BOTTOM_STAND_DIFF = 10
 TOP_HEIGHT = 50.0
 VENT_EXTRA_HEIGHT = 1.0
 VENT_TUBE_RADIUS = 3.0
+TOP_VENT_TUBE_RADIUS = 2.0
 
 # 漏斗参数
 FUNNEL_HEIGHT = 6.0
@@ -112,6 +113,32 @@ def bottom_cover_vent(result, count=6):
     return result
 
 
+def top_vent(result, vcount=3, rot_count=3):
+    low_z = BOTTOM_HEIGHT + VENT_EXTRA_HEIGHT + THICKNESS
+    high_z = low_z + TOP_HEIGHT
+    delta_z = (high_z - low_z) / vcount
+    first_z = low_z + 0.5 * delta_z
+    
+    angle_step = 360.0 / rot_count
+    
+    for v_idx in range(vcount):
+        cur_z = first_z + v_idx * delta_z
+        
+        for r_idx in range(rot_count):
+            angle = r_idx * angle_step
+            vent_hole = (
+                cq.Workplane("YZ")
+                .circle(TOP_VENT_TUBE_RADIUS)
+                .extrude(TOP_INNER_RADIUS + THICKNESS + 5) # 长度设定为足够穿透外壁即可
+                .rotate((0, 0, 0), (0, 0, 1), angle)
+                .translate((0, 0, cur_z))
+            )
+            
+            result = result.cut(vent_hole)
+    
+    return result
+
 model = create_model()
-model = bottom_cover_vent(model, 8)
+model = bottom_cover_vent(model, count=8)
+model = top_vent(model, vcount=3, rot_count=8)
 display(model)
